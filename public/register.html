@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faith Food and Fellowship — Register</title>
+<style>
+  :root {
+    --cream: #FDF6EC;
+    --burnt-orange: #D4561A;
+    --burnt-orange-dark: #B8480F;
+    --burgundy: #8B2635;
+    --gold: #E8A020;
+    --dark-brown: #3D2010;
+    --card-white: #FFFBF5;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--cream);
+    color: var(--dark-brown);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 24px 18px 60px;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 28px 8px 8px;
+  }
+
+  .hero .emojis {
+    font-size: 34px;
+    margin-bottom: 10px;
+  }
+
+  .hero h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--dark-brown);
+    margin: 0 0 10px;
+    line-height: 1.2;
+  }
+
+  .hero .tagline {
+    font-size: 17px;
+    color: #6B4A32;
+    margin: 0 0 20px;
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+
+  .badge {
+    background-color: var(--card-white);
+    border: 1px solid #EADCC8;
+    color: var(--dark-brown);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(139, 38, 53, 0.08);
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  a.badge:hover {
+    border-color: var(--burnt-orange);
+    color: var(--burnt-orange);
+  }
+
+  .hosted-by {
+    font-size: 14px;
+    color: #8B7355;
+    margin-bottom: 8px;
+  }
+
+  .card {
+    background-color: var(--card-white);
+    border-radius: 20px;
+    padding: 28px 24px;
+    box-shadow: 0 8px 30px rgba(139, 38, 53, 0.12);
+    margin-top: 20px;
+  }
+
+  .card h2 {
+    font-size: 24px;
+    margin: 0 0 4px;
+    color: var(--dark-brown);
+  }
+
+  .card .subtitle {
+    font-size: 14px;
+    color: #8B7355;
+    margin: 0 0 22px;
+  }
+
+  label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--dark-brown);
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #EADCC8;
+    background-color: #FFFDFA;
+    font-size: 16px;
+    color: var(--dark-brown);
+    font-family: inherit;
+  }
+
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--burnt-orange);
+  }
+
+  textarea {
+    min-height: 80px;
+    resize: vertical;
+  }
+
+  .party-size-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .party-size-control button {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1.5px solid #EADCC8;
+    background-color: #FFFDFA;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--burnt-orange);
+    cursor: pointer;
+  }
+
+  .party-size-control button:active {
+    background-color: var(--cream);
+  }
+
+  .party-size-control input {
+    text-align: center;
+    width: 70px;
+    flex: none;
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 14px;
+    background-color: var(--cream);
+    border-radius: 10px;
+  }
+
+  .checkbox-row input {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--burnt-orange);
+    flex: none;
+  }
+
+  .checkbox-row label {
+    margin: 0;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .submit-btn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    background-color: var(--burnt-orange);
+    color: #FFFBF5;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .submit-btn:hover {
+    background-color: var(--burnt-orange-dark);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .banner {
+    display: none;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 16px;
+  }
+
+  .banner.show { display: block; }
+
+  .banner.warning {
+    background-color: #FBEACB;
+    color: #7A5A0F;
+    border: 1px solid var(--gold);
+  }
+
+  .banner.error {
+    background-color: #F5DCE0;
+    color: var(--burgundy);
+    border: 1px solid var(--burgundy);
+  }
+
+  .success-card {
+    display: none;
+    text-align: center;
+  }
+
+  .success-card.show { display: block; }
+
+  .checkmark {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background-color: var(--burnt-orange);
+    color: #FFFBF5;
+    font-size: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+    animation: pop 0.4s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  .success-card h2 {
+    font-size: 26px;
+    margin-bottom: 6px;
+  }
+
+  .success-card .sub {
+    color: #6B4A32;
+    margin-bottom: 20px;
+  }
+
+  .reg-number-box {
+    background-color: var(--cream);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+
+  .reg-number-box .label {
+    font-size: 13px;
+    color: #8B7355;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .reg-number-box .number {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--burnt-orange);
+    margin-top: 4px;
+  }
+
+  .success-details {
+    text-align: left;
+    background-color: #FFFBF5;
+    border: 1px solid #EADCC8;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .share-line {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--burgundy);
+    margin-bottom: 12px;
+  }
+
+  .share-btn {
+    background-color: var(--card-white);
+    border: 1.5px solid var(--burnt-orange);
+    color: var(--burnt-orange);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  form.hide { display: none; }
+
+  footer {
+    text-align: center;
+    margin-top: 32px;
+    color: #A38B72;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  footer a {
+    color: #A38B72;
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="emojis">🍂🍁🦃🌾</div>
+    <h1>Faith Food and Fellowship</h1>
+    <p class="tagline">A celebration of community, warmth, and sweet treats</p>
+    <div class="badges">
+      <span class="badge">📅 Saturday, August 29, 2026</span>
+      <span class="badge">🕐 12:00 PM - 3:00 PM</span>
+      <a class="badge" href="https://maps.google.com/?q=422+Melton+St+Magnolia+TX+77354" target="_blank" rel="noopener">📍 Magnolia Community Center — 422 Melton St, Magnolia TX 77354</a>
+    </div>
+    <div class="hosted-by">Hosted by Beary Kool Kups</div>
+  </div>
+
+  <div class="card">
+    <form id="registerForm">
+      <h2>Reserve Your Spot</h2>
+      <p class="subtitle">Registration is free — space is limited</p>
+
+      <div id="errorBanner" class="banner error"></div>
+      <div id="warningBanner" class="banner warning"></div>
+
+      <label for="firstName">First Name *</label>
+      <input type="text" id="firstName" name="firstName" required>
+
+      <label for="lastName">Last Name *</label>
+      <input type="text" id="lastName" name="lastName" required>
+
+      <label for="email">Email Address *</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="phone">Phone Number *</label>
+      <input type="tel" id="phone" name="phone" required>
+
+      <label for="partySize">How many people are in your party? *</label>
+      <div class="party-size-control">
+        <button type="button" id="decreaseBtn" aria-label="Decrease">−</button>
+        <input type="text" id="partySize" name="partySize" value="1" inputmode="numeric" required>
+        <button type="button" id="increaseBtn" aria-label="Increase">+</button>
+      </div>
+
+      <label for="specialRequests">Any special requests or dietary needs?</label>
+      <textarea id="specialRequests" name="specialRequests" placeholder="Optional"></textarea>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="attendConfirm" required>
+        <label for="attendConfirm">I plan to attend and will do my best to be there 🍂</label>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Count Me In! 🎉</button>
+    </form>
+
+    <div class="success-card" id="successCard">
+      <div class="checkmark">✓</div>
+      <h2>You're on the list! 🎊</h2>
+      <p class="sub">Check your email for confirmation</p>
+      <div class="reg-number-box">
+        <div class="label">Registration Number</div>
+        <div class="number" id="regNumberDisplay"></div>
+      </div>
+      <div class="success-details" id="successDetails"></div>
+      <p class="share-line">Tell your friends about this event!</p>
+      <button class="share-btn" id="shareBtn" style="display:none;">Share Event</button>
+    </div>
+  </div>
+
+  <footer>
+    Powered by RiosAI Automations<br>
+    <a href="https://riosaiautomations.com" target="_blank" rel="noopener">riosaiautomations.com</a>
+  </footer>
+
+</div>
+
+<script>
+  const form = document.getElementById('registerForm');
+  const errorBanner = document.getElementById('errorBanner');
+  const warningBanner = document.getElementById('warningBanner');
+  const submitBtn = document.getElementById('submitBtn');
+  const partySizeInput = document.getElementById('partySize');
+
+  document.getElementById('decreaseBtn').addEventListener('click', () => {
+    let val = parseInt(partySizeInput.value, 10) || 1;
+    if (val > 1) partySizeInput.value = val - 1;
+  });
+
+  document.getElementById('increaseBtn').addEventListener('click', () => {
+    let val = parseInt(partySizeInput.value, 10) || 1;
+    if (val < 10) partySizeInput.value = val + 1;
+  });
+
+  function hideBanners() {
+    errorBanner.classList.remove('show');
+    warningBanner.classList.remove('show');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideBanners();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    const payload = {
+      firstName: document.getElementById('firstName').value.trim(),
+      lastName: document.getElementById('lastName').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      partySize: parseInt(partySizeInput.value, 10),
+      specialRequests: document.getElementById('specialRequests').value.trim()
+    };
+
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        form.classList.add('hide');
+        document.getElementById('regNumberDisplay').textContent = data.registrationNumber;
+        document.getElementById('successDetails').innerHTML =
+          '<strong>Event:</strong> Faith Food and Fellowship<br>' +
+          '<strong>Date:</strong> Saturday, August 29, 2026<br>' +
+          '<strong>Time:</strong> 12:00 PM - 3:00 PM<br>' +
+          '<strong>Location:</strong> Magnolia Community Center<br>' +
+          '<a href="https://maps.google.com/?q=422+Melton+St+Magnolia+TX+77354" target="_blank" rel="noopener" style="color:#D4561A;">422 Melton St, Magnolia TX 77354</a>';
+        document.getElementById('successCard').classList.add('show');
+
+        if (navigator.share) {
+          const shareBtn = document.getElementById('shareBtn');
+          shareBtn.style.display = 'inline-block';
+          shareBtn.addEventListener('click', () => {
+            navigator.share({
+              title: 'Faith Food and Fellowship',
+              text: "I just registered for Faith Food and Fellowship — join me!",
+              url: window.location.href
+            }).catch(() => {});
+          });
+        }
+      } else if (data.error === 'already_registered') {
+        warningBanner.textContent = "Looks like you're already registered! Check your email for your confirmation.";
+        warningBanner.classList.add('show');
+      } else {
+        errorBanner.textContent = data.message || 'Something went wrong. Please try again.';
+        errorBanner.classList.add('show');
+      }
+    } catch (err) {
+      errorBanner.textContent = 'Something went wrong. Please try again.';
+      errorBanner.classList.add('show');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Count Me In! 🎉';
+    }
+  });
+</script>
+</body>
+</html>

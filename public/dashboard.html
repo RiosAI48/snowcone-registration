@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Faith Food and Fellowship</title>
+<style>
+  :root {
+    --cream: #FDF6EC;
+    --burnt-orange: #D4561A;
+    --burnt-orange-dark: #B8480F;
+    --burgundy: #8B2635;
+    --gold: #E8A020;
+    --dark-brown: #3D2010;
+    --card-white: #FFFBF5;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--cream);
+    color: var(--dark-brown);
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 18px 60px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  header h1 {
+    font-size: 26px;
+    margin: 0 0 4px;
+  }
+
+  header .sub {
+    color: #8B7355;
+    font-size: 14px;
+  }
+
+  #exportBtn {
+    background-color: var(--burnt-orange);
+    color: #FFFBF5;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    height: fit-content;
+  }
+
+  #exportBtn:hover { background-color: var(--burnt-orange-dark); }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 800px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .summary-card {
+    background-color: var(--card-white);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 4px 16px rgba(139, 38, 53, 0.08);
+  }
+
+  .summary-card .num {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--burnt-orange);
+  }
+
+  .summary-card .label {
+    font-size: 13px;
+    color: #8B7355;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .reminder-panel {
+    background-color: var(--card-white);
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 16px rgba(139, 38, 53, 0.08);
+    margin-bottom: 20px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .reminder-item {
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .reminder-item .title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+
+  .reminder-item .schedule {
+    font-size: 13px;
+    color: #8B7355;
+    margin-bottom: 8px;
+  }
+
+  .status-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .status-pill.sent { background-color: #DCEEDB; color: #2E6B3A; }
+  .status-pill.pending { background-color: #FBEACB; color: #7A5A0F; }
+
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .toolbar input, .toolbar select {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #EADCC8;
+    background-color: var(--card-white);
+    font-size: 14px;
+    color: var(--dark-brown);
+  }
+
+  .toolbar input { flex: 1; min-width: 180px; }
+
+  .table-wrap {
+    background-color: var(--card-white);
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(139, 38, 53, 0.08);
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 900px;
+  }
+
+  th {
+    text-align: left;
+    padding: 12px 14px;
+    background-color: var(--burnt-orange);
+    color: #FFFBF5;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #F0E4D3;
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .status-badge {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .status-badge.confirmed { background-color: #DCEEDB; color: #2E6B3A; }
+  .status-badge.cancelled { background-color: #F5DCE0; color: var(--burgundy); }
+
+  .action-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-right: 6px;
+    margin-bottom: 4px;
+  }
+
+  .action-btn.cancel { background-color: #F5DCE0; color: var(--burgundy); }
+  .action-btn.resend { background-color: #FBEACB; color: #7A5A0F; }
+  .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .last-updated {
+    text-align: center;
+    color: #A38B72;
+    font-size: 12px;
+    margin-top: 16px;
+  }
+
+  .empty-row td {
+    text-align: center;
+    color: #8B7355;
+    padding: 30px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div>
+      <h1>Faith Food and Fellowship</h1>
+      <div class="sub">October 24, 2026 · Beary Kool Kups</div>
+    </div>
+    <button id="exportBtn">⬇ Download Attendee List CSV</button>
+  </header>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="num" id="totalRegistrations">0</div>
+      <div class="label">Total Registrations</div>
+    </div>
+    <div class="summary-card">
+      <div class="num" id="totalAttendees">0</div>
+      <div class="label">Total Attendees</div>
+    </div>
+    <div class="summary-card">
+      <div class="num" id="specialRequestsCount">0</div>
+      <div class="label">Special Requests</div>
+    </div>
+    <div class="summary-card">
+      <div class="num" id="registrationsToday">0</div>
+      <div class="label">Registrations Today</div>
+    </div>
+  </div>
+
+  <div class="reminder-panel">
+    <div class="reminder-item">
+      <div class="title">Day Before Reminder</div>
+      <div class="schedule">Scheduled for Oct 23 at 10:00 AM</div>
+      <span class="status-pill pending" id="dayBeforeStatus">Pending</span>
+    </div>
+    <div class="reminder-item">
+      <div class="title">Day Of Reminder</div>
+      <div class="schedule">Scheduled for Oct 24 at 9:00 AM</div>
+      <span class="status-pill pending" id="dayOfStatus">Pending</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="Search by name or email...">
+    <select id="statusFilter">
+      <option value="all">All statuses</option>
+      <option value="confirmed">Confirmed</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Reg #</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Party Size</th>
+          <th>Special Requests</th>
+          <th>Registered</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="last-updated" id="lastUpdated"></div>
+
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const adminKey = params.get('key') || '';
+
+  let registrations = [];
+
+  async function loadRegistrations() {
+    try {
+      const res = await fetch('/api/registrations?key=' + encodeURIComponent(adminKey));
+      if (!res.ok) return;
+      registrations = await res.json();
+      renderSummary();
+      renderReminderStatus();
+      renderTable();
+      document.getElementById('lastUpdated').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+    } catch (err) {
+      console.error('Failed to load registrations', err);
+    }
+  }
+
+  function renderSummary() {
+    const confirmed = registrations.filter(r => r.status === 'confirmed');
+    const totalAttendees = confirmed.reduce((sum, r) => sum + Number(r.partySize), 0);
+    const specialRequests = confirmed.filter(r => r.specialRequests && r.specialRequests.trim()).length;
+
+    const today = new Date();
+    const registrationsToday = registrations.filter(r => {
+      const d = new Date(r.registeredAt);
+      return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+    }).length;
+
+    document.getElementById('totalRegistrations').textContent = confirmed.length;
+    document.getElementById('totalAttendees').textContent = totalAttendees;
+    document.getElementById('specialRequestsCount').textContent = specialRequests;
+    document.getElementById('registrationsToday').textContent = registrationsToday;
+  }
+
+  async function renderReminderStatus() {
+    try {
+      const res = await fetch('/api/reminder-status?key=' + encodeURIComponent(adminKey));
+      if (!res.ok) return;
+      const data = await res.json();
+
+      const dayBeforeEl = document.getElementById('dayBeforeStatus');
+      dayBeforeEl.textContent = data.day_before.sent ? `Sent (${data.day_before.count})` : 'Pending';
+      dayBeforeEl.className = 'status-pill ' + (data.day_before.sent ? 'sent' : 'pending');
+
+      const dayOfEl = document.getElementById('dayOfStatus');
+      dayOfEl.textContent = data.day_of.sent ? `Sent (${data.day_of.count})` : 'Pending';
+      dayOfEl.className = 'status-pill ' + (data.day_of.sent ? 'sent' : 'pending');
+    } catch (e) {}
+  }
+
+  function renderTable() {
+    const search = document.getElementById('searchInput').value.trim().toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    let filtered = registrations.filter(r => {
+      const matchesSearch = !search ||
+        (r.firstName + ' ' + r.lastName).toLowerCase().includes(search) ||
+        r.email.toLowerCase().includes(search);
+      const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+
+    const tbody = document.getElementById('tableBody');
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No registrations found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(r => `
+      <tr>
+        <td>${r.registrationNumber}</td>
+        <td>${escapeHtml(r.firstName)} ${escapeHtml(r.lastName)}</td>
+        <td>${escapeHtml(r.email)}</td>
+        <td>${escapeHtml(r.phone)}</td>
+        <td>${r.partySize}</td>
+        <td>${escapeHtml(r.specialRequests || '—')}</td>
+        <td>${new Date(r.registeredAt).toLocaleString()}</td>
+        <td><span class="status-badge ${r.status}">${r.status}</span></td>
+        <td>
+          <button class="action-btn cancel" data-id="${r.id}" ${r.status === 'cancelled' ? 'disabled' : ''}>Cancel</button>
+          <button class="action-btn resend" data-id="${r.id}">Resend Email</button>
+        </td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('.action-btn.cancel').forEach(btn => {
+      btn.addEventListener('click', () => cancelRegistration(btn.dataset.id));
+    });
+    tbody.querySelectorAll('.action-btn.resend').forEach(btn => {
+      btn.addEventListener('click', () => resendEmail(btn.dataset.id));
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function cancelRegistration(id) {
+    if (!confirm('Are you sure you want to cancel this registration?')) return;
+    try {
+      const res = await fetch('/api/cancel/' + id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: adminKey })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        loadRegistrations();
+      } else {
+        alert(data.message || 'Failed to cancel registration.');
+      }
+    } catch (err) {
+      alert('Failed to cancel registration.');
+    }
+  }
+
+  async function resendEmail(id) {
+    try {
+      const res = await fetch('/api/resend/' + id + '?key=' + encodeURIComponent(adminKey));
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert('Confirmation email resent.');
+      } else {
+        alert(data.message || 'Failed to resend email.');
+      }
+    } catch (err) {
+      alert('Failed to resend email.');
+    }
+  }
+
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    window.location.href = '/api/export?key=' + encodeURIComponent(adminKey);
+  });
+
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+  document.getElementById('statusFilter').addEventListener('change', renderTable);
+
+  loadRegistrations();
+  setInterval(loadRegistrations, 60000);
+</script>
+</body>
+</html>
