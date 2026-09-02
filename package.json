@@ -8,9 +8,9 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
-    "@sendgrid/mail": "^8.1.6",
     "dotenv": "^16.6.1",
-    "express": "^4.22.2"
+    "express": "^4.22.2",
+    "resend": "^6.25.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

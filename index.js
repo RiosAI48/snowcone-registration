@@ -2,12 +2,12 @@ require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const sgMail = require('@sendgrid/mail');
+const { Resend } = require('resend');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const REGISTRATIONS_FILE = path.join(__dirname, 'registrations.json');
 const REMINDERS_FILE = path.join(__dirname, 'reminders-sent.json');
@@ -88,6 +88,25 @@ function detailsBox() {
   </div>`;
 }
 
+function menuBox() {
+  const items = [
+    '🥔 Mashed Potatoes',
+    '🥩 Beef Tips & Gravy',
+    '🫛 Green Beans',
+    '🥐 Homemade Biscuits',
+    '🍰 Homemade Dessert'
+  ];
+  const itemsHtml = items
+    .map((item, i) => `<div style="padding: 7px 0; ${i < items.length - 1 ? 'border-bottom: 1px solid #F0E4D3;' : ''} font-size: 15px;">${item}</div>`)
+    .join('');
+
+  return `
+  <div style="background-color: #FFFBF5; border: 1px solid #E8D9C5; border-radius: 8px; padding: 16px 20px; margin: 18px 0;">
+    <div style="color: #D4561A; font-weight: bold; font-size: 17px; margin-bottom: 8px;">What's on the Menu 🍽️</div>
+    ${itemsHtml}
+  </div>`;
+}
+
 function confirmationEmailHtml(registration) {
   const specialRequestsRow = registration.specialRequests
     ? `<div style="margin-bottom: 6px;"><strong>Special requests:</strong> ${registration.specialRequests}</div>`
@@ -96,13 +115,15 @@ function confirmationEmailHtml(registration) {
   const body = `
     <p style="font-size: 18px;">Hi ${registration.firstName}!</p>
     <p>You're officially on the list for <strong>${process.env.EVENT_NAME}</strong>. We're so glad you'll be joining us!</p>
+    <p style="text-align: center; padding: 14px 4px 18px;">Come hungry and leave full! 🦃🍂 Join us for a delicious homemade Thanksgiving meal. Gather around the table with family and friends or grab a meal to go! ❤️🍽️</p>
     ${detailsBox()}
+    ${menuBox()}
     <div style="background-color: #FFFBF5; border: 1px solid #E8D9C5; border-radius: 8px; padding: 16px 20px; margin: 18px 0;">
       <div style="margin-bottom: 6px;"><strong>Registration number:</strong> ${registration.registrationNumber}</div>
       <div style="margin-bottom: 6px;"><strong>Party size:</strong> ${registration.partySize}</div>
       ${specialRequestsRow}
     </div>
-    <p>We can't wait to share some warm fall fellowship, good food, and cool treats with you. See you soon!</p>
+    <p style="text-align: center; padding-top: 6px;">Good food, great company and a whole lot of Thanksgiving love! 🧡 We can't wait to see you there!</p>
   `;
   return emailWrapper(body);
 }
@@ -163,16 +184,29 @@ function dayOfReminderHtml(registration) {
 
 // ---------- Email senders ----------
 
+const FROM_ADDRESS = `${process.env.ADMIN_NAME} <${process.env.FROM_EMAIL}>`;
+
 async function sendEmail(to, subject, html) {
+  console.log('Attempting to send email via Resend...');
+  console.log(`  From: ${FROM_ADDRESS}`);
+  console.log(`  To: ${to}`);
+  console.log(`  Subject: ${subject}`);
+
   try {
-    await sgMail.send({
+    const { data, error } = await resend.emails.send({
       to,
-      from: process.env.FROM_EMAIL,
+      from: FROM_ADDRESS,
       subject,
       html
     });
+
+    if (error) {
+      console.error(`Email send FAILED to ${to}:`, error);
+    } else {
+      console.log(`Email send SUCCESS to ${to} (id: ${data ? data.id : 'unknown'})`);
+    }
   } catch (err) {
-    console.error(`Failed to send email to ${to}:`, err.response ? err.response.body : err.message);
+    console.error(`Email send FAILED to ${to}:`, err);
   }
 }
 
@@ -365,6 +399,31 @@ app.get('/api/export', (req, res) => {
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename="FaithFoodFellowship_Attendees.csv"');
   res.send(csv);
+});
+
+app.get('/test-email', async (req, res) => {
+  if (req.query.key !== process.env.ADMIN_DASHBOARD_KEY) {
+    return res.status(401).json({ error: 'unauthorized', message: 'Access denied. Invalid key.' });
+  }
+
+  const targetEmail = req.query.email || process.env.ADMIN_EMAIL;
+
+  const testRegistration = {
+    id: 'test-preview',
+    registrationNumber: 'FFF-001',
+    firstName: 'Albert',
+    lastName: 'Rios',
+    email: targetEmail,
+    phone: '000-000-0000',
+    partySize: 4,
+    specialRequests: '',
+    registeredAt: new Date().toISOString(),
+    status: 'confirmed'
+  };
+
+  await sendConfirmationEmail(testRegistration);
+
+  res.json({ success: true, message: `Test confirmation email sent to ${targetEmail}.` });
 });
 
 // ---------- Reminder scheduler ----------
