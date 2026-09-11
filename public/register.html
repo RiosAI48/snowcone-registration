@@ -357,12 +357,12 @@
 
   <div class="hero">
     <div class="emojis">🍂🍁🦃🌾</div>
-    <h1>Faith Food and Fellowship</h1>
+    <h1 id="eventName">Faith Food and Fellowship</h1>
     <p class="tagline">A celebration of community, warmth, and sweet treats</p>
     <div class="badges">
-      <span class="badge">📅 Friday, September 4, 2026</span>
-      <span class="badge">🕐 12:00 PM - 3:00 PM</span>
-      <a class="badge" href="https://maps.google.com/?q=422+Melton+St+Magnolia+TX+77354" target="_blank" rel="noopener">📍 Magnolia Community Center — 422 Melton St, Magnolia TX 77354</a>
+      <span class="badge" id="dateBadge">📅</span>
+      <span class="badge" id="timeBadge">🕐</span>
+      <a class="badge" id="locationBadge" href="https://maps.google.com/?q=422+Melton+St+Magnolia+TX+77354" target="_blank" rel="noopener">📍</a>
     </div>
     <div class="hosted-by">Hosted by Beary Kool Kups</div>
   </div>
@@ -435,6 +435,35 @@
   const submitBtn = document.getElementById('submitBtn');
   const partySizeInput = document.getElementById('partySize');
 
+  let eventInfo = null;
+
+  function formatEventDate(dateStr) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+    const monthDay = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    return `${weekday}, ${monthDay}, ${year}`;
+  }
+
+  async function loadEventInfo() {
+    try {
+      const response = await fetch('/api/event-info');
+      eventInfo = await response.json();
+
+      const [venueName, ...addressParts] = eventInfo.eventLocation.split(',');
+      const address = addressParts.join(',').trim();
+
+      document.getElementById('eventName').textContent = eventInfo.eventName;
+      document.getElementById('dateBadge').textContent = `📅 ${formatEventDate(eventInfo.eventDate)}`;
+      document.getElementById('timeBadge').textContent = `🕐 ${eventInfo.eventTime}`;
+      document.getElementById('locationBadge').textContent = `📍 ${venueName.trim()} — ${address}`;
+    } catch (err) {
+      console.error('Failed to load event info:', err);
+    }
+  }
+
+  loadEventInfo();
+
   document.getElementById('decreaseBtn').addEventListener('click', () => {
     let val = parseInt(partySizeInput.value, 10) || 1;
     if (val > 1) partySizeInput.value = val - 1;
@@ -476,12 +505,16 @@
       if (response.ok && data.success) {
         form.classList.add('hide');
         document.getElementById('regNumberDisplay').textContent = data.registrationNumber;
+
+        const [venueName, ...addressParts] = (eventInfo ? eventInfo.eventLocation : 'Magnolia Community Center, 422 Melton St, Magnolia TX 77354').split(',');
+        const address = addressParts.join(',').trim();
+
         document.getElementById('successDetails').innerHTML =
-          '<strong>Event:</strong> Faith Food and Fellowship<br>' +
-          '<strong>Date:</strong> Friday, September 4, 2026<br>' +
-          '<strong>Time:</strong> 12:00 PM - 3:00 PM<br>' +
-          '<strong>Location:</strong> Magnolia Community Center<br>' +
-          '<a href="https://maps.google.com/?q=422+Melton+St+Magnolia+TX+77354" target="_blank" rel="noopener" style="color:#D4561A;">422 Melton St, Magnolia TX 77354</a>';
+          `<strong>Event:</strong> ${eventInfo ? eventInfo.eventName : 'Faith Food and Fellowship'}<br>` +
+          `<strong>Date:</strong> ${eventInfo ? formatEventDate(eventInfo.eventDate) : 'Friday, September 4, 2026'}<br>` +
+          `<strong>Time:</strong> ${eventInfo ? eventInfo.eventTime : '12:00 PM - 3:00 PM'}<br>` +
+          `<strong>Location:</strong> ${venueName.trim()}<br>` +
+          `<a href="https://maps.google.com/?q=422+Melton+St+Magnolia+TX+77354" target="_blank" rel="noopener" style="color:#D4561A;">${address}</a>`;
         document.getElementById('successCard').classList.add('show');
 
         if (navigator.share) {

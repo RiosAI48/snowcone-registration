@@ -380,6 +380,16 @@ app.get('/api/resend/:id', async (req, res) => {
   res.json({ success: true, message: 'Confirmation email resent.' });
 });
 
+app.get('/api/event-info', (req, res) => {
+  res.json({
+    eventName: process.env.EVENT_NAME,
+    eventDate: process.env.EVENT_DATE,
+    eventTime: process.env.EVENT_TIME,
+    eventLocation: process.env.EVENT_LOCATION,
+    eventDescription: process.env.EVENT_DESCRIPTION
+  });
+});
+
 app.get('/api/export', (req, res) => {
   if (req.query.key !== process.env.ADMIN_DASHBOARD_KEY) {
     return res.status(401).json({ error: 'unauthorized', message: 'Access denied. Invalid key.' });
