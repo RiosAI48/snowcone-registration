@@ -173,15 +173,31 @@ function cancellationEmailHtml(registration) {
   return emailWrapper(body);
 }
 
-function dayBeforeReminderHtml(registration) {
+function oneWeekReminderHtml(registration) {
   const body = `
-    <p style="font-size: 18px;">Hi ${registration.firstName}!</p>
-    <p>Just a friendly reminder — <strong>${process.env.EVENT_NAME}</strong> is happening tomorrow! We can't wait to celebrate with you.</p>
+    <p style="font-size: 18px;">Hi ${registration.firstName}! 🍂</p>
+    <p>Just one week until <strong>${process.env.EVENT_NAME}</strong>! We're so excited to celebrate with you.</p>
     ${detailsBox()}
+    ${menuBox()}
     <div style="background-color: #FFFBF5; border: 1px solid #E8D9C5; border-radius: 8px; padding: 16px 20px; margin: 18px 0;">
       <div><strong>Your registration number:</strong> ${registration.registrationNumber}</div>
     </div>
-    <p>Get ready for great fellowship, warm food, and cool treats. See you tomorrow! 🍂</p>
+    <p style="text-align: center; padding-top: 6px;">Come hungry and leave full! 🦃🍂</p>
+    <p style="text-align: center;">Know someone who'd love to join us? Share the word and bring them along!</p>
+  `;
+  return emailWrapper(body);
+}
+
+function dayBeforeReminderHtml(registration) {
+  const body = `
+    <p style="font-size: 18px;">Hi ${registration.firstName}!</p>
+    <p><strong>Tomorrow is the day!</strong> ${process.env.EVENT_NAME} is happening tomorrow! We can't wait to celebrate with you.</p>
+    ${detailsBox()}
+    ${menuBox()}
+    <div style="background-color: #FFFBF5; border: 1px solid #E8D9C5; border-radius: 8px; padding: 16px 20px; margin: 18px 0;">
+      <div><strong>Your registration number:</strong> ${registration.registrationNumber}</div>
+    </div>
+    <p>Get ready for great fellowship, warm food, and cool treats. We can't wait to see you tomorrow! 🍂</p>
   `;
   return emailWrapper(body);
 }
@@ -189,9 +205,10 @@ function dayBeforeReminderHtml(registration) {
 function dayOfReminderHtml(registration) {
   const body = `
     <p style="font-size: 18px;">Hi ${registration.firstName}!</p>
-    <p><strong>Today is the day!</strong> ${process.env.EVENT_NAME} is happening today and we're so excited to see you.</p>
+    <p><strong>It's finally here!</strong> ${process.env.EVENT_NAME} is happening today and we're so excited to see you.</p>
     ${detailsBox()}
-    <p>Come hungry, come joyful — we'll see you there! 🎉</p>
+    ${menuBox()}
+    <p>Come hungry, come joyful — see you soon! 🧡</p>
   `;
   return emailWrapper(body);
 }
@@ -332,6 +349,10 @@ app.get('/api/reminder-status', (req, res) => {
   }
   const reminders = readReminders();
   res.json({
+    one_week: {
+      sent: Boolean(reminders.one_week && reminders.one_week.length > 0),
+      count: (reminders.one_week || []).length
+    },
     day_before: {
       sent: Boolean(reminders.day_before && reminders.day_before.length > 0),
       count: (reminders.day_before || []).length
@@ -388,6 +409,26 @@ app.get('/api/event-info', (req, res) => {
     eventLocation: process.env.EVENT_LOCATION,
     eventDescription: process.env.EVENT_DESCRIPTION
   });
+});
+
+app.get('/test-one-week-reminder', async (req, res) => {
+  if (req.query.key !== process.env.ADMIN_DASHBOARD_KEY) {
+    return res.status(401).json({ error: 'unauthorized', message: 'Access denied. Invalid key.' });
+  }
+
+  const registrations = readRegistrations();
+  const confirmed = registrations.filter(r => r.status === 'confirmed');
+  const reminders = readReminders();
+
+  const sentCount = await sendReminderBatch(
+    'one_week',
+    `One week away! 🍂 ${process.env.EVENT_NAME}`,
+    oneWeekReminderHtml,
+    confirmed,
+    reminders
+  );
+
+  res.json({ success: true, message: `One week reminder sent to ${sentCount} registrant(s).` });
 });
 
 app.get('/api/export', (req, res) => {
@@ -452,11 +493,23 @@ app.get('/test-email', async (req, res) => {
 
 // ---------- Reminder scheduler ----------
 
+async function sendReminderBatch(type, subject, htmlFn, confirmed, reminders) {
+  reminders[type] = reminders[type] || [];
+  const toRemind = confirmed.filter(r => !reminders[type].includes(r.email));
+  for (const registration of toRemind) {
+    await sendEmail(registration.email, subject, htmlFn(registration));
+    reminders[type].push(registration.email);
+  }
+  if (toRemind.length) writeReminders(reminders);
+  return toRemind.length;
+}
+
 async function checkReminders() {
   try {
     const [year, month, day] = process.env.EVENT_DATE.split('-').map(Number);
     const now = new Date();
 
+    const oneWeekBefore = new Date(year, month - 1, day - 7);
     const dayBefore = new Date(year, month - 1, day - 1);
     const dayOf = new Date(year, month - 1, day);
 
@@ -465,38 +518,25 @@ async function checkReminders() {
     const registrations = readRegistrations();
     const confirmed = registrations.filter(r => r.status === 'confirmed');
     const reminders = readReminders();
-    reminders.day_before = reminders.day_before || [];
-    reminders.day_of = reminders.day_of || [];
 
     const testReminderMode = process.env.TEST_REMINDER_MODE === 'true';
+
+    if (testReminderMode || (isSameDay(now, oneWeekBefore) && now.getHours() >= 10)) {
+      if (testReminderMode) {
+        console.log('TEST_REMINDER_MODE is enabled — sending one-week reminder immediately, ignoring the event date.');
+      }
+      await sendReminderBatch('one_week', `One week away! 🍂 ${process.env.EVENT_NAME}`, oneWeekReminderHtml, confirmed, reminders);
+    }
 
     if (testReminderMode || (isSameDay(now, dayBefore) && now.getHours() >= 10)) {
       if (testReminderMode) {
         console.log('TEST_REMINDER_MODE is enabled — sending day-before reminder immediately, ignoring the event date.');
       }
-      const toRemind = confirmed.filter(r => !reminders.day_before.includes(r.email));
-      for (const registration of toRemind) {
-        await sendEmail(
-          registration.email,
-          `See you tomorrow! 🍂 ${process.env.EVENT_NAME}`,
-          dayBeforeReminderHtml(registration)
-        );
-        reminders.day_before.push(registration.email);
-      }
-      if (toRemind.length) writeReminders(reminders);
+      await sendReminderBatch('day_before', `See you tomorrow! 🍂 ${process.env.EVENT_NAME}`, dayBeforeReminderHtml, confirmed, reminders);
     }
 
     if (isSameDay(now, dayOf) && now.getHours() >= 9) {
-      const toRemind = confirmed.filter(r => !reminders.day_of.includes(r.email));
-      for (const registration of toRemind) {
-        await sendEmail(
-          registration.email,
-          `Today is the day! 🎉 ${process.env.EVENT_NAME}`,
-          dayOfReminderHtml(registration)
-        );
-        reminders.day_of.push(registration.email);
-      }
-      if (toRemind.length) writeReminders(reminders);
+      await sendReminderBatch('day_of', `Today is the day! 🎉 ${process.env.EVENT_NAME}`, dayOfReminderHtml, confirmed, reminders);
     }
   } catch (err) {
     console.error('Reminder check error:', err);

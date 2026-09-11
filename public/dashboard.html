@@ -227,7 +227,7 @@
   <header>
     <div>
       <h1>Faith Food and Fellowship</h1>
-      <div class="sub">September 4, 2026 · Beary Kool Kups</div>
+      <div class="sub" id="eventSubtitle">September 4, 2026 · Beary Kool Kups</div>
     </div>
     <button id="exportBtn">⬇ Download Attendee List CSV</button>
   </header>
@@ -253,13 +253,18 @@
 
   <div class="reminder-panel">
     <div class="reminder-item">
+      <div class="title">One Week Reminder</div>
+      <div class="schedule" id="oneWeekSchedule">Scheduled for Aug 28 at 10:00 AM</div>
+      <span class="status-pill pending" id="oneWeekStatus">Pending</span>
+    </div>
+    <div class="reminder-item">
       <div class="title">Day Before Reminder</div>
-      <div class="schedule">Scheduled for Sep 3 at 10:00 AM</div>
+      <div class="schedule" id="dayBeforeSchedule">Scheduled for Sep 3 at 10:00 AM</div>
       <span class="status-pill pending" id="dayBeforeStatus">Pending</span>
     </div>
     <div class="reminder-item">
       <div class="title">Day Of Reminder</div>
-      <div class="schedule">Scheduled for Sep 4 at 9:00 AM</div>
+      <div class="schedule" id="dayOfSchedule">Scheduled for Sep 4 at 9:00 AM</div>
       <span class="status-pill pending" id="dayOfStatus">Pending</span>
     </div>
   </div>
@@ -302,6 +307,32 @@
 
   let registrations = [];
 
+  async function loadEventInfo() {
+    try {
+      const response = await fetch('/api/event-info');
+      const info = await response.json();
+
+      const [year, month, day] = info.eventDate.split('-').map(Number);
+      const eventDate = new Date(year, month - 1, day);
+      const oneWeekBefore = new Date(year, month - 1, day - 7);
+      const dayBefore = new Date(year, month - 1, day - 1);
+
+      document.getElementById('eventSubtitle').textContent =
+        `${eventDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} · Beary Kool Kups`;
+
+      document.getElementById('oneWeekSchedule').textContent =
+        `Scheduled for ${oneWeekBefore.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at 10:00 AM`;
+
+      document.getElementById('dayBeforeSchedule').textContent =
+        `Scheduled for ${dayBefore.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at 10:00 AM`;
+
+      document.getElementById('dayOfSchedule').textContent =
+        `Scheduled for ${eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at 9:00 AM`;
+    } catch (err) {
+      console.error('Failed to load event info:', err);
+    }
+  }
+
   async function loadRegistrations() {
     try {
       const res = await fetch('/api/registrations?key=' + encodeURIComponent(adminKey));
@@ -338,6 +369,10 @@
       const res = await fetch('/api/reminder-status?key=' + encodeURIComponent(adminKey));
       if (!res.ok) return;
       const data = await res.json();
+
+      const oneWeekEl = document.getElementById('oneWeekStatus');
+      oneWeekEl.textContent = data.one_week.sent ? `Sent (${data.one_week.count})` : 'Pending';
+      oneWeekEl.className = 'status-pill ' + (data.one_week.sent ? 'sent' : 'pending');
 
       const dayBeforeEl = document.getElementById('dayBeforeStatus');
       dayBeforeEl.textContent = data.day_before.sent ? `Sent (${data.day_before.count})` : 'Pending';
@@ -439,6 +474,7 @@
   document.getElementById('searchInput').addEventListener('input', renderTable);
   document.getElementById('statusFilter').addEventListener('change', renderTable);
 
+  loadEventInfo();
   loadRegistrations();
   setInterval(loadRegistrations, 60000);
 </script>
