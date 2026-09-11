@@ -19,7 +19,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ---------- Data helpers ----------
 
 function readRegistrations() {
-  const raw = fs.readFileSync(REGISTRATIONS_FILE, 'utf8');
+  let raw;
+  try {
+    raw = fs.readFileSync(REGISTRATIONS_FILE, 'utf8');
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+    writeRegistrations([]);
+    return [];
+  }
   return raw.trim() ? JSON.parse(raw) : [];
 }
 
@@ -28,7 +35,14 @@ function writeRegistrations(registrations) {
 }
 
 function readReminders() {
-  const raw = fs.readFileSync(REMINDERS_FILE, 'utf8');
+  let raw;
+  try {
+    raw = fs.readFileSync(REMINDERS_FILE, 'utf8');
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+    writeReminders({});
+    return {};
+  }
   return raw.trim() ? JSON.parse(raw) : {};
 }
 
