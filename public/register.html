@@ -338,6 +338,37 @@
 
   form.hide { display: none; }
 
+  .closed-card {
+    display: none;
+    text-align: center;
+    background: linear-gradient(180deg, var(--card-white) 0%, var(--cream) 100%);
+    border-top: 6px solid var(--burnt-orange);
+    padding: 36px 26px 30px;
+  }
+
+  .closed-card.show { display: block; }
+
+  .closed-card h2 {
+    font-size: 26px;
+    color: var(--burgundy);
+    margin: 0 0 14px;
+  }
+
+  .closed-card p {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--dark-brown);
+    margin: 0 0 22px;
+  }
+
+  .closed-card .closed-footer {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--burnt-orange);
+    padding-top: 16px;
+    border-top: 1px solid #EADCC8;
+  }
+
   footer {
     text-align: center;
     margin-top: 32px;
@@ -369,7 +400,13 @@
 
   <p class="intro-text">Come hungry and leave full! 🦃🍂 Join us for a delicious homemade Thanksgiving meal. Gather around the table with family and friends or grab a meal to go! ❤️🍽️</p>
 
-  <div class="card">
+  <div class="card closed-card" id="closedCard">
+    <h2>We've reached capacity! 🍂</h2>
+    <p>Thank you so much for the incredible response to Faith Food and Fellowship. This event is now full. We hope to see you at our next gathering! 🧡🦃</p>
+    <div class="closed-footer">Hosted by Beary Kool Kups</div>
+  </div>
+
+  <div class="card" id="formCard">
     <form id="registerForm">
       <h2>Reserve Your Spot</h2>
       <p class="subtitle">Registration is free — space is limited</p>
@@ -437,6 +474,11 @@
 
   let eventInfo = null;
 
+  function showRegistrationClosed() {
+    document.getElementById('formCard').style.display = 'none';
+    document.getElementById('closedCard').classList.add('show');
+  }
+
   function formatEventDate(dateStr) {
     const [year, month, day] = dateStr.split('-').map(Number);
     const date = new Date(year, month - 1, day);
@@ -457,6 +499,8 @@
       document.getElementById('dateBadge').textContent = `📅 ${formatEventDate(eventInfo.eventDate)}`;
       document.getElementById('timeBadge').textContent = `🕐 ${eventInfo.eventTime}`;
       document.getElementById('locationBadge').textContent = `📍 ${venueName.trim()} — ${address}`;
+
+      if (eventInfo.registrationClosed) showRegistrationClosed();
     } catch (err) {
       console.error('Failed to load event info:', err);
     }
@@ -528,6 +572,8 @@
             }).catch(() => {});
           });
         }
+      } else if (data.error === 'registration_closed') {
+        showRegistrationClosed();
       } else if (data.error === 'already_registered') {
         warningBanner.textContent = "Looks like you're already registered! Check your email for your confirmation.";
         warningBanner.classList.add('show');

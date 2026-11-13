@@ -55,6 +55,11 @@ function generateRegistrationNumber(registrations) {
   return `FFF-${String(count).padStart(3, '0')}`;
 }
 
+// Manual registration switch: closed only when REGISTRATION_CLOSED is exactly "true".
+function isRegistrationClosed() {
+  return process.env.REGISTRATION_CLOSED === 'true';
+}
+
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -283,6 +288,10 @@ app.get('/dashboard', (req, res) => {
 });
 
 app.post('/api/register', async (req, res) => {
+  if (isRegistrationClosed()) {
+    return res.status(403).json({ error: 'registration_closed', message: 'Registration for this event is now closed.' });
+  }
+
   try {
     const { firstName, lastName, email, phone, partySize, specialRequests } = req.body;
 
@@ -407,7 +416,8 @@ app.get('/api/event-info', (req, res) => {
     eventDate: process.env.EVENT_DATE,
     eventTime: process.env.EVENT_TIME,
     eventLocation: process.env.EVENT_LOCATION,
-    eventDescription: process.env.EVENT_DESCRIPTION
+    eventDescription: process.env.EVENT_DESCRIPTION,
+    registrationClosed: isRegistrationClosed()
   });
 });
 
