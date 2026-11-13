@@ -2,3 +2,7 @@
 node_modules/
 registrations.json
 reminders-sent.json
+
+# One-time recovery files (contain registrant PII / local only)
+recovered-registrations.json
+recover.js

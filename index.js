@@ -61,8 +61,12 @@ function writeReminders(reminders) {
 }
 
 function generateRegistrationNumber(registrations) {
-  const count = registrations.length + 1;
-  return `FFF-${String(count).padStart(3, '0')}`;
+  // Highest existing FFF number + 1 (not the array length), so gaps or removed records never cause a collision.
+  const highest = registrations.reduce((max, r) => {
+    const n = parseInt(String(r.registrationNumber || '').replace(/\D/g, ''), 10);
+    return Number.isFinite(n) && n > max ? n : max;
+  }, 0);
+  return `FFF-${String(highest + 1).padStart(3, '0')}`;
 }
 
 // Manual registration switch: closed only when REGISTRATION_CLOSED is exactly "true".
@@ -360,6 +364,77 @@ app.get('/api/registrations', (req, res) => {
     return res.status(401).json({ error: 'unauthorized', message: 'Access denied. Invalid key.' });
   }
   res.json(readRegistrations());
+});
+
+// ============================================================================
+// TEMPORARY — ONE-TIME IMPORT ROUTE. REMOVE THIS ROUTE AFTER THE IMPORT IS DONE.
+// POST /api/import?key=<ADMIN_DASHBOARD_KEY> with a JSON array of registrations
+// (e.g. the contents of recovered-registrations.json). Merges into registrations.json
+// in DATA_DIR, skips any email already present, keeps original registration numbers.
+// Sends NO emails and does NOT touch reminders-sent.json.
+// ============================================================================
+app.post('/api/import', (req, res) => {
+  if (req.query.key !== process.env.ADMIN_DASHBOARD_KEY) {
+    return res.status(401).json({ error: 'unauthorized', message: 'Access denied. Invalid key.' });
+  }
+
+  if (!Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'invalid_body', message: 'Request body must be a JSON array of registrations.' });
+  }
+
+  const registrations = readRegistrations();
+  const seenEmails = new Set(registrations.map(r => String(r.email).toLowerCase()));
+  const usedNumbers = new Set(registrations.map(r => r.registrationNumber));
+
+  const imported = [];
+  const skipped = [];
+  const numberConflicts = [];
+
+  for (const item of req.body) {
+    if (!item || typeof item.email !== 'string' || !item.email.trim() || !item.registrationNumber) {
+      skipped.push({ registrationNumber: item && item.registrationNumber, reason: 'invalid_record' });
+      continue;
+    }
+
+    const emailKey = item.email.toLowerCase();
+    if (seenEmails.has(emailKey)) {
+      skipped.push({ registrationNumber: item.registrationNumber, email: item.email, reason: 'email_already_present' });
+      continue;
+    }
+
+    if (usedNumbers.has(item.registrationNumber)) {
+      numberConflicts.push(item.registrationNumber);
+    }
+
+    const registration = {
+      id: item.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+      registrationNumber: item.registrationNumber,
+      firstName: item.firstName || '',
+      lastName: item.lastName || '',
+      email: item.email,
+      phone: item.phone || '',
+      partySize: Number(item.partySize) || 1,
+      specialRequests: item.specialRequests || '',
+      registeredAt: item.registeredAt || new Date().toISOString(),
+      status: item.status || 'confirmed'
+    };
+
+    registrations.push(registration);
+    seenEmails.add(emailKey);
+    usedNumbers.add(registration.registrationNumber);
+    imported.push(registration.registrationNumber);
+  }
+
+  if (imported.length) writeRegistrations(registrations);
+
+  res.json({
+    success: true,
+    imported: imported.length,
+    skipped: skipped.length,
+    skippedDetails: skipped,
+    numberConflicts,
+    totalRegistrations: registrations.length
+  });
 });
 
 app.get('/api/reminder-status', (req, res) => {
