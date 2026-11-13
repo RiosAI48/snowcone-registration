@@ -9,8 +9,16 @@ const PORT = process.env.PORT || 3002;
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const REGISTRATIONS_FILE = path.join(__dirname, 'registrations.json');
-const REMINDERS_FILE = path.join(__dirname, 'reminders-sent.json');
+// JSON data files live in DATA_DIR (e.g. a Railway volume mount) when set, otherwise next to this file.
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const REGISTRATIONS_FILE = path.join(process.env.DATA_DIR || __dirname, 'registrations.json');
+const REMINDERS_FILE = path.join(process.env.DATA_DIR || __dirname, 'reminders-sent.json');
+
+function ensureDataDir() {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+ensureDataDir();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -31,6 +39,7 @@ function readRegistrations() {
 }
 
 function writeRegistrations(registrations) {
+  ensureDataDir();
   fs.writeFileSync(REGISTRATIONS_FILE, JSON.stringify(registrations, null, 2));
 }
 
@@ -47,6 +56,7 @@ function readReminders() {
 }
 
 function writeReminders(reminders) {
+  ensureDataDir();
   fs.writeFileSync(REMINDERS_FILE, JSON.stringify(reminders, null, 2));
 }
 
